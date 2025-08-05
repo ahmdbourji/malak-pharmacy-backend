@@ -8,6 +8,8 @@ const sequelize = require('./config/db');
 // ✅ import routes
 const productRoutes = require('./routes/product.routes');
 const authRoutes = require('./routes/auth.routes'); // ✅ auth route
+const adminRoutes = require('./routes/admin.routes');
+
 
 const app = express();
 
@@ -15,7 +17,7 @@ const allowedOrigins = [
   'http://localhost:4200',    // أثناء التطوير
   'https://YOUR-FRONTEND.com' // ضع هنا دومين موقعك بعد النشر
 ];
-
+app.use('/api/admins', adminRoutes);
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);

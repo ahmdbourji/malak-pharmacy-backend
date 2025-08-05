@@ -10,3 +10,4 @@ sequelize.sync({ alter: true }) // or { force: true } if you want to drop and re
     console.error('❌ Failed to sync:', err);
     process.exit(1);
   });
+
