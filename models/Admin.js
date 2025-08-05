@@ -12,8 +12,10 @@ const Admin = sequelize.define('Admin', {
     type: DataTypes.STRING,
     allowNull: false
   }
+}, {
+  tableName: 'admins',      // ⬅️ أضف هذه السطر
+  timestamps: true          // ⬅️ إذا جدولك فيه createdAt و updatedAt
 });
-
 
 Admin.beforeCreate(async (admin, options) => {
   if (admin.passwordHash) {
@@ -21,7 +23,6 @@ Admin.beforeCreate(async (admin, options) => {
     admin.passwordHash = await bcrypt.hash(admin.passwordHash, salt);
   }
 });
-
 
 Admin.beforeUpdate(async (admin, options) => {
   if (admin.changed('passwordHash')) {
