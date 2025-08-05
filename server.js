@@ -17,7 +17,7 @@ const allowedOrigins = [
   'http://localhost:4200',    // أثناء التطوير
   'https://YOUR-FRONTEND.com' // ضع هنا دومين موقعك بعد النشر
 ];
-app.use('/api/admins', adminRoutes);
+
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
@@ -38,7 +38,7 @@ app.use('/images', express.static(path.join(__dirname, 'uploads')));
 // ✅ API routes
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes); // ✅ login endpoint
-
+app.use('/api/admins', adminRoutes);
 // ✅ test route
 app.get('/', (req, res) => {
   res.send('Backend running');
