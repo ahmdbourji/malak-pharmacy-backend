@@ -1,21 +1,20 @@
+// backend/controllers/product.controller.js
 const Product = require('../models/Product');
-const path = require('path');
-const fs = require('fs');
+const { v2: cloudinary } = require('cloudinary'); // ⬅️ لاستخدام destroy عند الحذف
 
-// Create product with image upload
+// ────────────────────────────────────────────────
+// 1) إنشاء منتج مع رفع صورة إلى Cloudinary
+// ────────────────────────────────────────────────
 exports.createProduct = async (req, res) => {
   try {
-    let imagePath = null;
-    if (req.file) {
-      imagePath = `${req.file.filename}`;  // path to serve images statically
-    }
+    const imagePath = req.file ? req.file.path : null; // رابط مباشر من Cloudinary
 
     const newProduct = await Product.create({
-      name: req.body.name,
-      category: req.body.category,
-      price: req.body.price,
+      name:        req.body.name,
+      category:    req.body.category,
+      price:       req.body.price,
       description: req.body.description,
-      images: imagePath,
+      images:      imagePath,
     });
 
     res.status(201).json(newProduct);
@@ -24,8 +23,10 @@ exports.createProduct = async (req, res) => {
   }
 };
 
-// Get all products
-exports.getAllProducts = async (req, res) => {
+// ────────────────────────────────────────────────
+// 2) جلب جميع المنتجات
+// ────────────────────────────────────────────────
+exports.getAllProducts = async (_, res) => {
   try {
     const products = await Product.findAll();
     res.json(products);
@@ -34,54 +35,52 @@ exports.getAllProducts = async (req, res) => {
   }
 };
 
-// Update product with image upload
+// ────────────────────────────────────────────────
+// 3) تحديث منتج (مع إمكانية استبدال الصورة)
+// ────────────────────────────────────────────────
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
+    const product = await Product.findByPk(id);
+    if (!product) return res.status(404).json({ error: 'Product not found' });
 
-    let imagePath = null;
-    if (req.file) {
-      imagePath = `/images/${req.file.filename}`;
-    }
+    // إذا وُجدت صورة جديدة نرفعها ونضع رابطها
+    const newImagePath = req.file ? req.file.path : null;
 
+    // تحضير البيانات المُحدَّثة
     const updatedData = {
-      name: req.body.name,
-      category: req.body.category,
-      price: req.body.price,
+      name:        req.body.name,
+      category:    req.body.category,
+      price:       req.body.price,
       description: req.body.description,
+      ...(newImagePath && { images: newImagePath }),
     };
 
-    if (imagePath) {
-      updatedData.images = imagePath;
-    }
+    await Product.update(updatedData, { where: { id } });
+    const updatedProduct = await Product.findByPk(id);
 
-    const [updated] = await Product.update(updatedData, { where: { id } });
-
-    if (updated) {
-      const updatedProduct = await Product.findByPk(id);
-      res.json(updatedProduct);
-    } else {
-      res.status(404).json({ error: 'Product not found' });
-    }
+    res.json(updatedProduct);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// ✅ Correctly defined outside updateProduct
+// ────────────────────────────────────────────────
+// 4) حذف منتج (وملف الصورة في Cloudinary اختياريًا)
+// ────────────────────────────────────────────────
 exports.deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const product = await Product.findByPk(id);
+    if (!product) return res.status(404).json({ error: 'Product not found' });
 
-    if (!product) {
-      return res.status(404).json({ error: 'Product not found' });
-    }
-
+    // ❗️اختياري: حذف الصورة من Cloudinary إن وُجدت
     if (product.images) {
-      const imagePath = path.join(__dirname, '..', product.images);
-      fs.unlink(imagePath, (err) => {
-        if (err) console.warn('Image deletion failed:', err.message);
+      // public_id هو آخر جزء قبل الامتداد بعد upload/
+      // مثال: https://res.cloudinary.com/<cloud>/image/upload/v1691446/abc123.png
+      const publicId = product.images.split('/').pop().split('.')[0];
+      cloudinary.uploader.destroy(`malak_pharmacy/${publicId}`, err => {
+        if (err) console.warn('Cloudinary delete error:', err.message);
       });
     }
 
@@ -91,6 +90,7 @@ exports.deleteProduct = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 
