@@ -15,7 +15,7 @@ const app = express();
 
 const allowedOrigins = [
   'http://localhost:4200',    // أثناء التطوير
-  'https://malak-pharmacy-frontend-882p.vercel.app' // ضع هنا دومين موقعك بعد النشر
+  'https://malak-pharmacy-frontend.vercel.app' // ضع هنا دومين موقعك بعد النشر
 ];
 
 app.use(cors({
